@@ -444,6 +444,9 @@ document.querySelectorAll('.mood-btn').forEach(btn => {
     document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const response = MOOD_RESPONSES[mood];
+    const moodEl = document.getElementById('moodResponse');
+    moodEl.textContent = response;
+    moodEl.style.display = 'block';
     addChatMessage(response, 'tomate');
     if (CONFIG.voiceEnabled) speak(response);
     STATE.moods.push({ mood, date: new Date().toISOString() });
@@ -468,7 +471,7 @@ function loadNews() {
         '<div class="news-title">' + news.title + '</div>' +
       '</div>';
     item.addEventListener('click', () => {
-      window.open('https://wa.me/?text=' + encodeURIComponent(news.title), '_blank');
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(news.title), '_blank');
     });
     scroll.appendChild(item);
   });
@@ -715,11 +718,38 @@ function loadSecretConvs() {
 // ═══════════════════════════════════════════
 // PLAY — YOUTUBE
 // ═══════════════════════════════════════════
+function embedOrOpen(containerId, query, label) {
+  const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+  document.getElementById(containerId).innerHTML =
+    '<div style="text-align:center;padding:24px 16px;">' +
+      '<div style="font-size:40px;margin-bottom:12px;">🎬</div>' +
+      '<div style="font-weight:800;font-size:16px;margin-bottom:8px;">' + label + '</div>' +
+      '<a href="' + ytUrl + '" target="_blank" class="btn btn-red btn-block" style="font-size:15px;">▶️ Ouvrir sur YouTube</a>' +
+      '<div style="margin-top:20px;color:var(--text-secondary);font-size:13px;">Tu as un lien vidéo ? Colle-le ici :</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px;">' +
+        '<input id="ytDirectUrl_' + containerId + '" class="input-field" placeholder="https://youtube.com/watch?v=..." style="border-radius:24px;flex:1;font-size:13px;">' +
+        '<button class="btn btn-blue" onclick="loadYtDirect(\'' + containerId + '\')">▶️</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function loadYtDirect(containerId) {
+  const input = document.getElementById('ytDirectUrl_' + containerId);
+  if (!input) return;
+  const url = input.value.trim();
+  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+  if (match) {
+    document.getElementById(containerId).innerHTML =
+      '<iframe src="https://www.youtube-nocookie.com/embed/' + match[1] + '?autoplay=1" allowfullscreen allow="autoplay; encrypted-media" style="width:100%;height:280px;border:none;border-radius:12px;"></iframe>';
+  } else {
+    showToast('⚠️ Lien YouTube invalide — ex: https://youtube.com/watch?v=ABC123');
+  }
+}
+
 function searchYouTube() {
   const query = document.getElementById('ytSearch').value.trim();
   if (!query) return;
-  document.getElementById('ytPlayer').innerHTML =
-    '<iframe src="https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(query) + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
+  embedOrOpen('ytPlayer', query, query);
   showToast('🎬 Recherche: ' + query);
 }
 
@@ -814,9 +844,8 @@ document.getElementById('shareMusic').addEventListener('click', () => {
 function searchMusic() {
   const query = document.getElementById('musicSearch').value.trim();
   if (!query) return;
-  document.getElementById('musicResults').innerHTML =
-    '<div class="iframe-container mt-16"><iframe src="https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(query + ' music') + '" allowfullscreen allow="autoplay"></iframe></div>' +
-    '<div class="mt-8"><a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(query + ' music') + '" target="_blank" class="btn btn-block">Voir plus de résultats sur YouTube</a></div>';
+  embedOrOpen('musicResults', query + ' music', '🎵 ' + query);
+  showToast('🎵 Recherche: ' + query);
 }
 
 document.getElementById('musicSearchBtn').addEventListener('click', searchMusic);
