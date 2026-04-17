@@ -620,32 +620,25 @@ async function toggleVoice() {
           })
         });
         const data = await resp.json();
-        console.log('STT response:', JSON.stringify(data).slice(0, 200));
+        if (data.error) {
+          if (data.error.code === 403 && data.error.message.includes('disabled')) {
+            showToast('⚙️ Active Speech-to-Text dans GCP (voir console)', 6000);
+            document.getElementById('sttErrorBanner').style.display = 'block';
+          } else {
+            throw new Error(data.error.message);
+          }
+          return;
+        }
         const transcript = data.results?.[0]?.alternatives?.[0]?.transcript;
         if (transcript) {
           chatInput.value = transcript;
           sendChatMessage();
-        } else if (data.error) {
-          throw new Error('API: ' + data.error.message);
         } else {
           showToast('🎤 Rien compris — parle plus fort et réessaie !');
         }
       } catch (err) {
         console.error('Cloud STT error:', err.message);
-        // Fallback : Web Speech API
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          showToast('🎤 Micro activé (mode 2) — parle maintenant !');
-          const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-          const sr = new SR();
-          sr.lang = 'fr-FR';
-          sr.continuous = false;
-          sr.interimResults = false;
-          sr.onresult = e => { chatInput.value = e.results[0][0].transcript; sendChatMessage(); };
-          sr.onerror = e => showToast('🎤 Micro indisponible (' + e.error + ') — écris ton message !');
-          sr.start();
-        } else {
-          showToast('🎤 Micro non disponible — écris ton message !');
-        }
+        showToast('🎤 Erreur micro — réessaie !');
       }
     };
 
