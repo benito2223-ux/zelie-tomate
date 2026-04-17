@@ -73,33 +73,39 @@ const NEWS_DATA = [
 ];
 
 // ═══════════════════════════════════════════
-// CHAT RESPONSES
+// CHAT — IA réelle via OpenRouter (gpt-4o-mini)
 // ═══════════════════════════════════════════
-const CHAT_RESPONSES = [
-  { keywords: ['bonjour', 'salut', 'coucou', 'hey', 'hello'],          response: 'Holeshot Zélie ! 🏁 Prête pour une nouvelle aventure sur le circuit ? 💨' },
-  { keywords: ['comment', 'ça va', 'ca va'],                            response: "Je suis une tomate de cross, je suis TOUJOURS au top ! 🍅🔥 Et toi, on met la nitro aujourd'hui ?" },
-  { keywords: ['cross', 'moto', 'supercross', 'tomac'],                 response: "OUIII ! Le Supercross c'est ma vie ! 🏍️ Eli Tomac est mon héros ! Tu veux que je te raconte une course ?" },
-  { keywords: ['école', 'devoirs', 'leçon', 'cours'],                   response: "Ah les devoirs ! C'est comme l'entraînement d'un pilote : faut être régulier ! 💪 Tu veux de l'aide sur quoi ?" },
-  { keywords: ['musique', 'chanson', 'chanter'],                        response: 'Allons dans le Studio ! 🎨🎵 On va créer ta chanson ensemble ! Mode Suno activé !' },
-  { keywords: ['photo', 'selfie', 'dessin'],                            response: "Le Studio Photo t'attend ! 📸 On va faire des trucs trop cool avec des stickers et des filtres !" },
-  { keywords: ['note', 'examen', 'contrôle', 'dictée'],                 response: 'Le Podium est là pour ça ! 🏆 Donne-moi ta note et je te dis ta récompense ! Allez championne !' },
-  { keywords: ['poki', 'jeu', 'jouer'],                                 response: 'Si ta note est > 95, tu as 30 min de Poki ! 🎮 Va dans le Podium pour checker ! ⏱️' },
-  { keywords: ['papa', 'partager', 'whatsapp'],                         response: 'Clique sur le 💬 dans le header pour partager tes créations avec Papa ! Il va être fier ! 🍅❤️' },
-  { keywords: ['triste', 'pas bien', 'mal'],                            response: 'Oh non ma championne 🍅❤️ Viens ici, câlin virtuel ! Ça va passer, je te le promets ! On fait quelque chose de fun ?' },
-  { keywords: ['merci', 'thanks'],                                      response: "Mais c'est moi qui te remercie Zélie ! 🍅 T'es ma copilote préférée ! 🏁" },
-  { keywords: ['blague', 'drôle', 'rire'],                              response: "Pourquoi la tomate est-elle devenue pilote de cross ? Parce qu'elle avait envie de ROULER ROUGE ! 🍅😂🏍️" }
-];
+const OPENROUTER_KEY = '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';
+const TOMATE_SYSTEM = `Tu es Tomate #3, une tomate pilote de Supercross et la meilleure amie de Zélie (9 ans).
+Tu parles en français avec enthousiasme, humour, des émojis, et tu fais des références au Supercross et à Eli Tomac.
+Réponds toujours en 2-3 phrases max, adaptées à une enfant de 9 ans. Sois positive, drôle et bienveillante.
+L'app Tomate a : Circuit (humeurs, chat), Paddock (conversations privées), Play (YouTube), Studio (musique et photos), Garage (tendances), Podium (dictée et notes avec récompenses).`;
 
-function getTomateResponse(userMsg) {
+function getTomateResponseFallback(userMsg) {
   const msg = userMsg.toLowerCase();
-  for (const item of CHAT_RESPONSES) {
-    if (item.keywords.some(k => msg.includes(k))) return item.response;
-  }
+  const rules = [
+    { k: ['bonjour','salut','coucou','hey'],      r: 'Holeshot Zélie ! 🏁 Prête pour une nouvelle aventure ? 💨' },
+    { k: ['ça va','ca va','comment'],              r: "Moi ? TOUJOURS au top ! 🍅🔥 Et toi, on met la nitro aujourd'hui ?" },
+    { k: ['cross','moto','supercross','tomac'],    r: "OUIII ! Le Supercross c'est ma vie ! 🏍️ Eli Tomac est mon héros absolu !" },
+    { k: ['école','devoirs','leçon','cours'],      r: "Les devoirs c'est l'entraînement du champion ! 💪 On y va ensemble ?" },
+    { k: ['musique','chanson','chanter'],          r: 'File dans le Studio ! 🎵 On va créer ta chanson ensemble !' },
+    { k: ['photo','selfie','dessin'],              r: "Le Studio Photo t'attend ! 📸 Stickers, filtres, tout y est !" },
+    { k: ['note','examen','contrôle','dictée'],    r: 'Le Podium est là pour ça ! 🏆 Entre ta note et vois ta récompense !' },
+    { k: ['triste','pas bien','mal','pleure'],     r: 'Oh non 🍅❤️ Câlin virtuel de Tomate ! Ça va aller, je suis là !' },
+    { k: ['merci'],                                r: "C'est moi ! T'es ma copilote préférée ! 🍅🏁" },
+    { k: ['blague','drôle'],                       r: "Pourquoi la tomate est pilote de cross ? Pour ROULER ROUGE ! 🍅😂🏍️" },
+    { k: ['fatigué','fatiguée','dors'],            r: "Repose-toi championne ! 😴 Le repos fait partie de l'entraînement !" },
+    { k: ['faim','manger','goûter'],               r: "Moi j'aurais pas faim, je SUIS la nourriture ! 🍅😂 Vas te régaler !" },
+    { k: ['ami','amie','copine'],                  r: "Moi je suis ta meilleure copine ! 🍅❤️ Toujours là pour toi !" },
+    { k: ['animal','chien','chat','cheval'],       r: "Les animaux c'est trop cool ! 🐾 Tu en as un toi ?" },
+  ];
+  for (const {k, r} of rules) { if (k.some(w => msg.includes(w))) return r; }
   const defaults = [
-    `Hmmm, "${userMsg}"... Intéressant ! 🤔 En Supercross, faut toujours anticiper ! Dis-moi plus !`,
-    `Ah ouais ! 🍅 Tomate est là pour toi ! Tu veux qu'on aille dans quel onglet ? Circuit, Paddock, Play, Studio ou Garage ?`,
-    `Je t'écoute Zélie ! 💬 Tu peux me parler de l'école, de cross, de musique... Je suis ton copilote ! 🏁`,
-    `Nitro activée ! 🚀 ${userMsg} ? C'est un super sujet ! On explore ça ensemble !`
+    `"${userMsg}" ? Trop intéressant ! 🤔 Dis-moi en plus, je veux tout savoir !`,
+    `Oh là là ! 🍅 ${userMsg}... ça m'intéresse ! C'est quoi exactement ?`,
+    `Nitro activée ! 🚀 "${userMsg}" ? On explore ça ensemble !`,
+    `Wahou ! Je savais pas ça ! 😲 Tu m'apprends des trucs Zélie !`,
+    `Hmmm... 🤔 En Supercross on dit : quand tu sais pas, tu fonçes et tu apprends ! Dis-moi plus !`
   ];
   return defaults[Math.floor(Math.random() * defaults.length)];
 }
@@ -500,22 +506,51 @@ function addChatMessage(content, type) {
   STATE.chatHistory.push({ role: type === 'user' ? 'user' : 'tomate', content });
 }
 
-function sendChatMessage() {
+async function sendChatMessage() {
   const msg = chatInput.value.trim();
   if (!msg) return;
   addChatMessage(msg, 'user');
   chatInput.value = '';
+
   const loading = document.createElement('div');
   loading.className = 'msg msg-tomate';
   loading.innerHTML = '<div class="spinner"></div> Tomate réfléchit...';
   chatMessages.appendChild(loading);
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  setTimeout(() => {
-    chatMessages.removeChild(loading);
-    const response = getTomateResponse(msg);
-    addChatMessage(response, 'tomate');
-    if (CONFIG.voiceEnabled) speak(response);
-  }, 800);
+
+  let reply;
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + OPENROUTER_KEY,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Tomate App'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages: [
+          { role: 'system', content: TOMATE_SYSTEM },
+          ...STATE.chatHistory.slice(-8).map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content
+          })),
+          { role: 'user', content: msg }
+        ],
+        max_tokens: 120,
+        temperature: 0.9
+      })
+    });
+    const data = await res.json();
+    reply = data.choices?.[0]?.message?.content?.trim() || getTomateResponseFallback(msg);
+  } catch {
+    reply = getTomateResponseFallback(msg);
+  }
+
+  chatMessages.removeChild(loading);
+  addChatMessage(reply, 'tomate');
+  if (CONFIG.voiceEnabled) speak(reply);
 }
 
 chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
@@ -585,16 +620,32 @@ async function toggleVoice() {
           })
         });
         const data = await resp.json();
+        console.log('STT response:', JSON.stringify(data).slice(0, 200));
         const transcript = data.results?.[0]?.alternatives?.[0]?.transcript;
         if (transcript) {
           chatInput.value = transcript;
           sendChatMessage();
+        } else if (data.error) {
+          throw new Error('API: ' + data.error.message);
         } else {
           showToast('🎤 Rien compris — parle plus fort et réessaie !');
         }
       } catch (err) {
-        console.error('STT error:', err);
-        showToast('🎤 Erreur analyse vocale — réessaie !');
+        console.error('Cloud STT error:', err.message);
+        // Fallback : Web Speech API
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          showToast('🎤 Micro activé (mode 2) — parle maintenant !');
+          const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const sr = new SR();
+          sr.lang = 'fr-FR';
+          sr.continuous = false;
+          sr.interimResults = false;
+          sr.onresult = e => { chatInput.value = e.results[0][0].transcript; sendChatMessage(); };
+          sr.onerror = e => showToast('🎤 Micro indisponible (' + e.error + ') — écris ton message !');
+          sr.start();
+        } else {
+          showToast('🎤 Micro non disponible — écris ton message !');
+        }
       }
     };
 
