@@ -38,6 +38,17 @@
 <!-- ══════════ TOAST ══════════ -->
 <div class="toast" id="toast"></div>
 
+<!-- ══════════ BANDEAU CONFIG GEMINI ══════════ -->
+<div id="geminiSetupBanner" style="display:none;background:#1a2340;border-bottom:2px solid var(--yellow);padding:10px 16px;font-size:13px;z-index:200;position:relative;">
+  🤖 <strong>Active l'IA de Tomate :</strong>
+  <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--yellow);font-weight:800;">Obtiens une clé Gemini gratuite</a>
+  puis colle-la ici :
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <input id="geminiKeyInput" class="input-field" placeholder="AIza..." style="border-radius:24px;flex:1;font-size:13px;padding:8px 14px;">
+    <button class="btn btn-yellow" id="saveGeminiKey" style="white-space:nowrap;">💾 Sauver</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════
      HEADER
      ═══════════════════════════════════════════ -->

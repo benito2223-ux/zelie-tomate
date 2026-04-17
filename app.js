@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════
 const CONFIG = {
   tomateCode: localStorage.getItem('tomate_code') || '0303',
-  voiceEnabled: false
+  voiceEnabled: false,
+  geminiKey: localStorage.getItem('tomate_gemini_key') || ''
 };
 
 // ═══════════════════════════════════════════
@@ -75,7 +76,6 @@ const NEWS_DATA = [
 // ═══════════════════════════════════════════
 // CHAT — IA réelle via OpenRouter (gpt-4o-mini)
 // ═══════════════════════════════════════════
-const OPENROUTER_KEY = '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';
 const TOMATE_SYSTEM = `Tu es Tomate #3, une tomate pilote de Supercross et la meilleure amie de Zélie (9 ans).
 Tu parles en français avec enthousiasme, humour, des émojis, et tu fais des références au Supercross et à Eli Tomac.
 Réponds toujours en 2-3 phrases max, adaptées à une enfant de 9 ans. Sois positive, drôle et bienveillante.
@@ -506,6 +506,34 @@ function addChatMessage(content, type) {
   STATE.chatHistory.push({ role: type === 'user' ? 'user' : 'tomate', content });
 }
 
+async function callGemini(userMsg) {
+  if (!CONFIG.geminiKey) return null;
+  const history = STATE.chatHistory.slice(-8);
+  const contents = [];
+  for (const m of history) {
+    contents.push({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] });
+  }
+  contents.push({ role: 'user', parts: [{ text: userMsg }] });
+  const res = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + CONFIG.geminiKey,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: TOMATE_SYSTEM }] },
+        contents,
+        generationConfig: { maxOutputTokens: 120, temperature: 0.9 }
+      })
+    }
+  );
+  const data = await res.json();
+  if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    return data.candidates[0].content.parts[0].text.trim();
+  }
+  if (data.error) console.error('Gemini error:', data.error.message);
+  return null;
+}
+
 async function sendChatMessage() {
   const msg = chatInput.value.trim();
   if (!msg) return;
@@ -520,33 +548,9 @@ async function sendChatMessage() {
 
   let reply;
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + OPENROUTER_KEY,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Tomate App'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
-        messages: [
-          { role: 'system', content: TOMATE_SYSTEM },
-          ...STATE.chatHistory.slice(-8).map(m => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            content: m.content
-          })),
-          { role: 'user', content: msg }
-        ],
-        max_tokens: 120,
-        temperature: 0.9
-      })
-    });
-    const data = await res.json();
-    reply = data.choices?.[0]?.message?.content?.trim() || getTomateResponseFallback(msg);
-  } catch {
-    reply = getTomateResponseFallback(msg);
-  }
+    reply = await callGemini(msg);
+  } catch(e) { reply = null; }
+  if (!reply) reply = getTomateResponseFallback(msg);
 
   chatMessages.removeChild(loading);
   addChatMessage(reply, 'tomate');
@@ -570,6 +574,7 @@ async function toggleVoice() {
   // Stop si en cours
   if (STATE.isListening && STATE.mediaRecorder) {
     STATE.mediaRecorder.stop();
+    btn.textContent = '🎤';
     return;
   }
 
@@ -642,9 +647,15 @@ async function toggleVoice() {
       }
     };
 
-    recorder.start();
-    // Auto-stop après 7 secondes
-    setTimeout(() => { if (STATE.isListening && recorder.state === 'recording') recorder.stop(); }, 7000);
+    recorder.start(250); // chunks toutes les 250ms pour réactivité
+    // Timer visuel + auto-stop 4s
+    let secs = 4;
+    btn.textContent = '⏺ ' + secs + 's';
+    const countdown = setInterval(() => {
+      secs--;
+      if (secs > 0) { btn.textContent = '⏺ ' + secs + 's'; }
+      else { clearInterval(countdown); btn.textContent = '🎤'; if (STATE.isListening && recorder.state === 'recording') recorder.stop(); }
+    }, 1000);
 
   } catch (err) {
     STATE.isListening = false;
@@ -1438,5 +1449,26 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-console.log('🍅 TOMATE v1.3 — Chargé !');
-console.log('Fixes appliqués : Gomme destination-out | Voix maman pitch 0.9 rate 0.8 | PointerEvents iPad | Cycle Auto Jeu/Ven');
+// Pré-chauffe le token Google dès le démarrage pour éviter la latence
+getGoogleTTSToken().catch(() => {});
+
+// Sauvegarde clé Gemini
+const saveGeminiBtn = document.getElementById('saveGeminiKey');
+if (saveGeminiBtn) {
+  saveGeminiBtn.addEventListener('click', () => {
+    const key = document.getElementById('geminiKeyInput').value.trim();
+    if (!key.startsWith('AIza')) { showToast('⚠️ Clé invalide — commence par AIza...'); return; }
+    CONFIG.geminiKey = key;
+    localStorage.setItem('tomate_gemini_key', key);
+    document.getElementById('geminiSetupBanner').style.display = 'none';
+    showToast('✅ Clé Gemini sauvegardée ! L\'IA est activée 🤖');
+  });
+}
+
+// Affiche le bandeau config Gemini si pas de clé
+if (!CONFIG.geminiKey) {
+  const banner = document.getElementById('geminiSetupBanner');
+  if (banner) banner.style.display = 'block';
+}
+
+console.log('🍅 TOMATE v1.4 — Chargé ! Gemini:', CONFIG.geminiKey ? 'configuré' : 'non configuré');
