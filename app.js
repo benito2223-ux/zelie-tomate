@@ -377,8 +377,8 @@ function getRandomQuote() {
 function initModeAuto() {
   const day = new Date().getDay(); // 0=dim, 1=lun ... 4=jeu, 5=ven
   const modeLabel = document.getElementById('modeLabel');
-  const modeTitle = document.getElementById('modeTitle');
-  const modeDesc  = document.getElementById('modeDesc');
+  const modeTitle = document.getElementById('modeAutoTitle');
+  const modeDesc  = document.getElementById('modeAutoDesc');
 
   if (day === 4 || day === 5) {
     modeLabel.textContent = '📋 Mode PRÉPARATION';
@@ -521,7 +521,7 @@ addChatMessage("Holeshot Zélie ! 🏁 Je suis Tomate #3, ton copilote ! Qu'est-
 // ═══════════════════════════════════════════
 // VOICE RECOGNITION
 // ═══════════════════════════════════════════
-const voiceBtns = [document.getElementById('voiceToggle'), document.getElementById('chatVoice')];
+const voiceBtns = [document.getElementById('chatVoice')];
 voiceBtns.forEach(btn => btn.addEventListener('click', toggleVoice));
 
 function toggleVoice() {
