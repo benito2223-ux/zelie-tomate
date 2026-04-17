@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🍅 TOMATE v1.3 - Supercross Edition #3</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PASSWORD OVERLAY (Paddock Vault)
+     ═══════════════════════════════════════════ -->
+<div class="pwd-overlay" id="pwdOverlay">
+  <div class="pwd-box">
+    <h3>🔒 Coffre-fort du Paddock</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Entre le code secret de Zélie !</p>
+    <div class="pwd-dots" id="pwdDots">
+      <div class="pwd-dot"></div><div class="pwd-dot"></div><div class="pwd-dot"></div><div class="pwd-dot"></div>
+    </div>
+    <div class="pwd-keypad" id="pwdKeypad">
+      <button class="pwd-key" data-key="1">1</button><button class="pwd-key" data-key="2">2</button><button class="pwd-key" data-key="3">3</button>
+      <button class="pwd-key" data-key="4">4</button><button class="pwd-key" data-key="5">5</button><button class="pwd-key" data-key="6">6</button>
+      <button class="pwd-key" data-key="7">7</button><button class="pwd-key" data-key="8">8</button><button class="pwd-key" data-key="9">9</button>
+      <button class="pwd-key" data-key="clear">⌫</button><button class="pwd-key" data-key="0">0</button><button class="pwd-key" data-key="ok">✓</button>
+    </div>
+    <button class="btn btn-outline btn-sm mt-16" id="pwdCancel">Annuler</button>
+  </div>
+</div>
+
+<!-- ══════════ CONFETTI CONTAINER ══════════ -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<!-- ══════════ TOAST ══════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="tomate-avatar">🍅</div>
+    <div>
+      <div class="header-title">TOMATE <span style="color:var(--yellow)">v1.3</span></div>
+      <div class="header-subtitle" id="modeLabel">⚡ Supercross Edition #3</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="header-btn" id="voiceToggle" title="Mode vocal">🎤</button>
+    <button class="header-btn" id="whatsappShare" title="Partager">💬</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     NAVIGATION TABS
+     ═══════════════════════════════════════════ -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-tab="circuit"><span class="tab-icon">🏁</span>Circuit</button>
+  <button class="nav-tab" data-tab="paddock"><span class="tab-icon">🏗️</span>Paddock</button>
+  <button class="nav-tab" data-tab="play"><span class="tab-icon">▶️</span>Play</button>
+  <button class="nav-tab" data-tab="studio"><span class="tab-icon">🎨</span>Studio</button>
+  <button class="nav-tab" data-tab="garage"><span class="tab-icon">🏎️</span>Garage</button>
+  <button class="nav-tab" data-tab="podium"><span class="tab-icon">🏆</span>Podium</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MAIN CONTENT
+     ═══════════════════════════════════════════ -->
+<main class="main-content">
+
+  <!-- ══════════ TAB: CIRCUIT (HOME) ══════════ -->
+  <div class="tab-content active" id="tab-circuit">
+    <div class="date-display" id="dateDisplay"></div>
+
+    <!-- MODE AUTO BADGE -->
+    <div id="modeAutoCard" class="card" style="border:2px solid var(--yellow);text-align:center;padding:12px;">
+      <div class="card-title yellow" style="justify-content:center;" id="modeAutoTitle">⚡ Mode du jour</div>
+      <div id="modeAutoDesc" style="font-size:14px;color:var(--text-secondary);"></div>
+    </div>
+
+    <div class="quote-box" id="quoteBox">
+      <div id="quoteText"></div>
+      <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title red">🍅 Comment va Zélie aujourd'hui ?</div>
+      <div class="mood-grid" id="moodGrid">
+        <div><button class="mood-btn" data-mood="super"><span>🤩</span></button><div class="mood-label">Super</div></div>
+        <div><button class="mood-btn" data-mood="happy"><span>😊</span></button><div class="mood-label">Joyeux</div></div>
+        <div><button class="mood-btn" data-mood="ok"><span>😐</span></button><div class="mood-label">OK</div></div>
+        <div><button class="mood-btn" data-mood="tired"><span>😴</span></button><div class="mood-label">Fatigué</div></div>
+        <div><button class="mood-btn" data-mood="sad"><span>😢</span></button><div class="mood-label">Triste</div></div>
+      </div>
+      <div id="moodResponse" class="mt-8" style="font-weight:700;color:var(--yellow);"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title blue">📰 Les découvertes du jour</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span class="badge badge-red">SCIENCES</span>
+        <span class="badge badge-blue">ANIMAUX</span>
+        <span class="badge badge-yellow">IA</span>
+        <button class="btn btn-sm btn-outline" id="refreshNews" style="padding:6px 12px;">🔄 Actualiser</button>
+      </div>
+      <div class="news-scroll" id="newsScroll"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title yellow">💬 Parle avec Tomate !</div>
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg msg-tomate">
+            <div class="tomate-msg-header">🍅 Tomate #3</div>
+            Holeshot Zélie ! 🏁 Bienvenue sur le Circuit ! Moi c'est Tomate, ton copilote de cross ! Pose-moi une question ou choisis ton mood pour commencer ! 🏎️💨
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" class="input-field" id="chatInput" placeholder="Écris ton message à Tomate..." style="border-radius:24px;">
+          <button class="btn btn-red" id="chatSend" style="border-radius:50%;width:48px;height:48px;padding:0;">➤</button>
+          <button class="voice-btn" id="chatVoice">🎤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: PADDOCK (PRIVÉ) ══════════ -->
+  <div class="tab-content" id="tab-paddock">
+    <div class="section-title"><span class="emoji">🏗️</span> Le Paddock de Zélie</div>
+
+    <div class="card">
+      <div class="card-title red">📋 Historique des conversations</div>
+      <div id="convHistory" class="mb-16">
+        <div class="loading"><div class="spinner"></div> Chargement...</div>
+      </div>
+      <button class="btn btn-blue btn-block" id="newConv">🆕 Nouvelle conversation</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title yellow">🔒 Coffre-fort secret</div>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Ici, tu peux cacher tes conversations les plus secrètes ! Personne ne peut entrer sans le code ! 🤫</p>
+      <button class="btn btn-red btn-block" id="openVault">🔐 Ouvrir le coffre-fort</button>
+      <div id="vaultContent" class="hidden mt-16">
+        <div class="card" style="background:var(--surface);">
+          <div class="card-title blue">📝 Conversations secrètes</div>
+          <div id="secretConvs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: PLAY ══════════ -->
+  <div class="tab-content" id="tab-play">
+    <div class="section-title"><span class="emoji">▶️</span> Play Zone</div>
+
+    <div class="card">
+      <div class="card-title red">📺 YouTube Kids</div>
+      <div class="search-bar">
+        <input type="text" class="input-field" id="ytSearch" placeholder="Cherche un vidéo..." style="border-radius:24px;">
+        <button class="btn btn-red" id="ytSearchBtn">🔍</button>
+      </div>
+      <div class="iframe-container" id="ytPlayer">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:18px;">
+          🎬 Cherche un vidéo pour commencer !
+        </div>
+      </div>
+      <div class="mt-8">
+        <p style="font-size:12px;color:var(--text-secondary);">💡 Astuce : Cherche "YouTube Kids" ou des chaînes éducatives !</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title blue">🎵 Recherche Musicale</div>
+      <div class="search-bar">
+        <input type="text" class="input-field" id="musicSearch" placeholder="Cherche une chanson, un artiste..." style="border-radius:24px;">
+        <button class="btn btn-blue" id="musicSearchBtn">🎵</button>
+      </div>
+      <div id="musicResults"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: STUDIO ══════════ -->
+  <div class="tab-content" id="tab-studio">
+    <div class="section-title"><span class="emoji">🎨</span> Le Studio Créatif</div>
+
+    <!-- STUDIO SUB-TABS -->
+    <div class="nav-tabs mb-16">
+      <button class="nav-tab active" data-studio="music"><span class="tab-icon">🎵</span>Musique</button>
+      <button class="nav-tab" data-studio="photo"><span class="tab-icon">📸</span>Photo</button>
+    </div>
+
+    <!-- MUSIC CREATION -->
+    <div class="studio-content active" id="studio-music">
+      <div class="card">
+        <div class="card-title red">🎵 Créateur Musical (Mode Suno)</div>
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Décris ta musique et Tomate va créer les paroles et l'ambiance ! 🎤</p>
+
+        <label style="font-weight:700;margin-bottom:8px;display:block;">1️⃣ Choisis le style :</label>
+        <div class="music-style-grid" id="musicStyleGrid">
+          <button class="music-style-btn" data-style="pop"><span class="style-icon">🎤</span>Pop</button>
+          <button class="music-style-btn" data-style="rock"><span class="style-icon">🎸</span>Rock</button>
+          <button class="music-style-btn" data-style="rap"><span class="style-icon">🎧</span>Rap</button>
+          <button class="music-style-btn" data-style="electro"><span class="style-icon">🎹</span>Électro</button>
+          <button class="music-style-btn" data-style="disney"><span class="style-icon">🏰</span>Disney</button>
+          <button class="music-style-btn" data-style="reggaeton"><span class="style-icon">💃</span>Reggaeton</button>
+        </div>
+
+        <label style="font-weight:700;margin-bottom:8px;display:block;">2️⃣ Décris ton idée :</label>
+        <textarea class="input-field" id="musicIdea" placeholder="Ex: Une chanson sur les chevaux qui courent dans la prairie, avec des refrains joyeux..."></textarea>
+
+        <button class="btn btn-pink btn-lg mt-16" id="generateMusic">✨ Générer ma chanson !</button>
+
+        <div id="musicLoading" class="loading hidden mt-16"><div class="spinner"></div> Tomate compose ta musique...</div>
+
+        <div id="musicResult" class="hidden mt-16">
+          <div class="card-title blue">🎶 Ta chanson est prête !</div>
+          <div class="lyrics-display" id="lyricsDisplay"></div>
+          <div class="flex-center gap-8 mt-16">
+            <button class="btn btn-green" id="playMusic">▶️ Jouer la musique</button>
+            <button class="btn btn-yellow" id="singLyrics">🎤 Chanter les paroles</button>
+            <button class="btn btn-outline" id="shareMusic">💬 Partager</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTO CREATION -->
+    <div class="studio-content" id="studio-photo">
+      <div class="card">
+        <div class="card-title yellow">📸 Photo Créateur (Mode Snapchat)</div>
+
+        <div class="camera-container">
+          <video id="cameraFeed" autoplay playsinline style="width:100%;border-radius:var(--radius);display:none;"></video>
+          <canvas id="photoCanvas" width="500" height="400"></canvas>
+        </div>
+
+        <div class="camera-controls">
+          <button class="btn btn-red" id="startCamera">📷 Caméra</button>
+          <button class="btn btn-blue" id="takePhoto">📸 Prendre photo</button>
+          <button class="btn btn-green" id="uploadPhoto">📁 Importer</button>
+          <button class="btn btn-outline" id="clearCanvas">🗑️ Effacer</button>
+          <input type="file" id="photoUploadInput" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="divider"></div>
+
+        <label style="font-weight:700;margin-bottom:8px;display:block;">🎨 Filtres :</label>
+        <div class="filter-grid" id="filterGrid">
+          <button class="filter-btn" data-filter="none">Normal</button>
+          <button class="filter-btn" data-filter="grayscale">Noir &amp; Blanc</button>
+          <button class="filter-btn" data-filter="sepia">Vintage</button>
+          <button class="filter-btn" data-filter="invert">Inversé</button>
+          <button class="filter-btn" data-filter="blur">Flou</button>
+          <button class="filter-btn" data-filter="brightness">Lumineux</button>
+          <button class="filter-btn" data-filter="contrast">Contraste</button>
+          <button class="filter-btn" data-filter="cross">Supercross</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <label style="font-weight:700;margin-bottom:8px;display:block;">🎭 Stickers (glisser sur la photo) :</label>
+        <div class="sticker-palette" id="stickerPalette">
+          <button class="sticker-btn" data-sticker="🏁">🏁</button>
+          <button class="sticker-btn" data-sticker="🏍️">🏍️</button>
+          <button class="sticker-btn" data-sticker="🍅">🍅</button>
+          <button class="sticker-btn" data-sticker="🎖️">🎖️</button>
+          <button class="sticker-btn" data-sticker="❤️">❤️</button>
+          <button class="sticker-btn" data-sticker="⭐">⭐</button>
+          <button class="sticker-btn" data-sticker="🔥">🔥</button>
+          <button class="sticker-btn" data-sticker="😎">😎</button>
+          <button class="sticker-btn" data-sticker="🥸">🥸</button>
+          <button class="sticker-btn" data-sticker="👑">👑</button>
+          <button class="sticker-btn" data-sticker="🎩">🎩</button>
+          <button class="sticker-btn" data-sticker="🦊">🦊</button>
+          <button class="sticker-btn" data-sticker="🐱">🐱</button>
+          <button class="sticker-btn" data-sticker="🌈">🌈</button>
+          <button class="sticker-btn" data-sticker="💫">💫</button>
+          <button class="sticker-btn" data-sticker="🎵">🎵</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <label style="font-weight:700;margin-bottom:8px;display:block;">✏️ Stylo (dessiner sur la photo) :</label>
+        <div class="flex-center gap-8 mb-8">
+          <input type="color" id="penColor" value="#ff0000" style="width:40px;height:40px;border:none;border-radius:8px;cursor:pointer;">
+          <input type="range" id="penSize" min="1" max="20" value="3" style="flex:1;">
+          <span id="penSizeLabel" style="font-weight:700;font-size:13px;">3px</span>
+          <button class="btn btn-sm btn-outline" id="penToggle">✏️ Stylo ON</button>
+        </div>
+
+        <button class="btn btn-yellow btn-lg mt-16" id="exportPhoto">📥 Sauvegarder dans la pellicule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: GARAGE ══════════ -->
+  <div class="tab-content" id="tab-garage">
+    <div class="section-title"><span class="emoji">🏎️</span> Le Garage</div>
+
+    <div class="card">
+      <div class="card-title red">🔥 Tendances du moment</div>
+      <div class="trend-grid" id="trendGrid">
+        <div class="trend-card" data-search="mode enfant tendance 2025">
+          <div class="trend-icon">👗</div>
+          <div class="trend-name">Mode Enfant</div>
+        </div>
+        <div class="trend-card" data-search="Vinted enfant vêtements">
+          <div class="trend-icon">🛍️</div>
+          <div class="trend-name">Vinted</div>
+        </div>
+        <div class="trend-card" data-search="jeux populaires enfants 2025">
+          <div class="trend-icon">🎮</div>
+          <div class="trend-name">Jeux</div>
+        </div>
+        <div class="trend-card" data-search="animaux mignons">
+          <div class="trend-icon">🐾</div>
+          <div class="trend-name">Animaux</div>
+        </div>
+        <div class="trend-card" data-search="sciences enfants expériences">
+          <div class="trend-icon">🔬</div>
+          <div class="trend-name">Sciences</div>
+        </div>
+        <div class="trend-card" data-search="dessins animés 2025">
+          <div class="trend-icon">🎬</div>
+          <div class="trend-name">Dessins</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title blue">🔍 Recherche web</div>
+      <div class="search-bar">
+        <input type="text" class="input-field" id="webSearch" placeholder="Cherche ce que tu veux !" style="border-radius:24px;">
+        <button class="btn btn-blue" id="webSearchBtn">🔍</button>
+      </div>
+      <div id="webResults"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB: PODIUM ══════════ -->
+  <div class="tab-content" id="tab-podium">
+    <div class="section-title"><span class="emoji">🏆</span> Le Podium de Zélie</div>
+
+    <!-- DICTEE MODULE -->
+    <div class="card">
+      <div class="card-title red">📝 Dictée au Stylet</div>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Le lundi, Tomate scanne les mots et tu les écris avec ton stylet ! Elle corrige tes fautes avec bienveillance ! 💪</p>
+
+      <div class="flex-center gap-8 mb-8">
+        <button class="btn btn-blue" id="scanWords">📷 Scanner des mots</button>
+        <button class="btn btn-red" id="startDictee">✏️ Commencer la dictée</button>
+        <input type="file" id="ocrInput" accept="image/*" style="display:none;">
+      </div>
+
+      <div id="dicteeArea" class="hidden">
+        <div class="mb-8" style="font-weight:700;">📖 Mots à écrire :</div>
+        <div id="dicteeWords" class="mb-8" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+
+        <canvas id="dicteeCanvas" width="500" height="300" style="width:100%;background:#1a1a2e;border-radius:var(--radius);touch-action:none;"></canvas>
+
+        <div class="flex-center gap-8 mt-8">
+          <button class="btn btn-sm btn-outline" id="dicteePenToggle">✏️ Stylo</button>
+          <button class="btn btn-sm btn-outline" id="dicteeEraser">🧹 Gomme</button>
+          <button class="btn btn-sm btn-outline" id="dicteeClear">🗑️ Effacer tout</button>
+          <button class="btn btn-sm btn-green" id="dicteeCheck">✅ Vérifier</button>
+        </div>
+
+        <div id="dicteeFeedback" class="mt-8"></div>
+      </div>
+    </div>
+
+    <!-- GRADE INPUT -->
+    <div class="card">
+      <div class="card-title yellow">📊 Ta note de la semaine</div>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Le vendredi, entre ta note pour voir ta récompense ! 🎉</p>
+
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" class="input-field" id="gradeInput" min="0" max="100" placeholder="Ta note sur 100" style="border-radius:24px;">
+        <button class="btn btn-yellow" id="submitGrade">🏆 Valider</button>
+      </div>
+    </div>
+
+    <!-- PODIUM DISPLAY -->
+    <div class="card" id="podiumCard" style="display:none;">
+      <div class="card-title red" style="justify-content:center;">🏆 PODIUM</div>
+      <div class="podium-display" id="podiumDisplay">
+        <div class="podium-step">
+          <div class="podium-medal">🥈</div>
+          <div class="podium-score" id="podiumSilver">97%</div>
+        </div>
+        <div class="podium-step">
+          <div class="podium-medal">🥇</div>
+          <div class="podium-score" id="podiumGold">99%</div>
+        </div>
+        <div class="podium-step">
+          <div class="podium-medal">🥉</div>
+          <div class="podium-score" id="podiumBronze">95%</div>
+        </div>
+      </div>
+
+      <div id="rewardDisplay" class="text-center mt-16" style="font-size:18px;font-weight:800;"></div>
+
+      <div id="pokiTimer" class="hidden mt-16">
+        <div class="card" style="background:var(--surface);">
+          <div class="card-title blue">🎮 Temps Poki restant</div>
+          <div class="timer-display" id="timerDisplay">30:00</div>
+          <button class="btn btn-red btn-block" id="stopTimer">⏹️ Arrêter le timer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRADE HISTORY -->
+    <div class="card">
+      <div class="card-title blue">📈 Historique des notes</div>
+      <div id="gradeHistory">
+        <p style="color:var(--text-secondary);font-size:14px;">Pas encore de notes. Entre ta première note ! 📝</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
