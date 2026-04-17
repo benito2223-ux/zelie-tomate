@@ -474,6 +474,7 @@ function loadNews() {
   });
 }
 loadNews();
+document.getElementById('refreshNews').addEventListener('click', loadNews);
 
 // ═══════════════════════════════════════════
 // CHAT
@@ -553,10 +554,17 @@ function toggleVoice() {
     STATE.isListening = false;
     voiceBtns.forEach(b => b.classList.remove('listening'));
   };
-  STATE.recognition.onerror = () => {
+  STATE.recognition.onerror = (event) => {
     STATE.isListening = false;
     voiceBtns.forEach(b => b.classList.remove('listening'));
-    showToast('🎤 Oups, j\'ai pas bien entendu. Réessaie !');
+    const msgs = {
+      'not-allowed':      '🔒 Micro bloqué — autorise le micro dans ton navigateur !',
+      'no-speech':        '🎤 Je n\'ai rien entendu. Parle plus fort et réessaie !',
+      'network':          '🌐 Problème réseau. Réessaie dans quelques secondes.',
+      'service-not-allowed': '⚠️ Reconnaissance vocale non autorisée sur ce navigateur.',
+      'audio-capture':    '🎙️ Micro introuvable. Vérifie qu\'il est bien branché !'
+    };
+    showToast(msgs[event.error] || '🎤 Oups ! Réessaie en parlant clairement.');
   };
   STATE.recognition.start();
   showToast('🎤 Je t\'écoute Zélie ! Parle maintenant...');
@@ -732,7 +740,7 @@ document.querySelectorAll('.music-style-btn').forEach(btn => {
   });
 });
 
-document.getElementById('generateLyricsBtn').addEventListener('click', () => {
+document.getElementById('generateMusic').addEventListener('click', () => {
   if (!STATE.musicStyle) { showToast('🎵 Choisis un style de musique d\'abord !'); return; }
   const idea    = document.getElementById('musicIdea').value.trim();
   const loading = document.getElementById('musicLoading');
@@ -806,7 +814,7 @@ document.getElementById('shareMusic').addEventListener('click', () => {
 function searchMusic() {
   const query = document.getElementById('musicSearch').value.trim();
   if (!query) return;
-  document.getElementById('musicFrame').innerHTML =
+  document.getElementById('musicResults').innerHTML =
     '<div class="iframe-container mt-16"><iframe src="https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(query + ' music') + '" allowfullscreen allow="autoplay"></iframe></div>' +
     '<div class="mt-8"><a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(query + ' music') + '" target="_blank" class="btn btn-block">Voir plus de résultats sur YouTube</a></div>';
 }
@@ -1036,6 +1044,20 @@ function applyFilter() {
         data[i+2] = Math.min(255, Math.max(0, 1.5 * (data[i+2] - 128) + 128));
       }
       break;
+    case 'blur':
+      // Simple box blur 3×3
+      const w = photoCanvas.width, h = photoCanvas.height;
+      const src = new Uint8ClampedArray(data);
+      for (let y2 = 1; y2 < h - 1; y2++) {
+        for (let x2 = 1; x2 < w - 1; x2++) {
+          for (let c = 0; c < 3; c++) {
+            let sum = 0;
+            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) sum += src[((y2 + dy) * w + (x2 + dx)) * 4 + c];
+            data[(y2 * w + x2) * 4 + c] = sum / 9;
+          }
+        }
+      }
+      break;
     case 'cross':
       for (let i = 0; i < data.length; i += 4) {
         if (i % 8 < 4) { data[i]   = Math.min(255, data[i]   + 60); }
@@ -1067,15 +1089,20 @@ document.getElementById('penSize').addEventListener('input', (e) => {
 document.getElementById('penToggle').addEventListener('click', () => {
   STATE.penActive = !STATE.penActive;
   STATE.eraserActive = false;
+  const eraserBtn = document.getElementById('photoEraserToggle');
+  if (eraserBtn) { eraserBtn.textContent = '🧹 Gomme OFF'; eraserBtn.style.background = ''; }
   const btn = document.getElementById('penToggle');
   btn.textContent      = STATE.penActive ? '✏️ Stylo ON' : '✏️ Stylo OFF';
   btn.style.background = STATE.penActive ? 'var(--blue)' : '';
 });
 
-document.getElementById('eraserToggle').addEventListener('click', () => {
+document.getElementById('photoEraserToggle').addEventListener('click', () => {
   STATE.eraserActive = !STATE.eraserActive;
   STATE.penActive = false;
-  const btn = document.getElementById('eraserToggle');
+  const penBtn = document.getElementById('penToggle');
+  const btn    = document.getElementById('photoEraserToggle');
+  penBtn.textContent      = '✏️ Stylo OFF';
+  penBtn.style.background = '';
   btn.textContent      = STATE.eraserActive ? '🧹 Gomme ON' : '🧹 Gomme OFF';
   btn.style.background = STATE.eraserActive ? 'var(--red)' : '';
 });
@@ -1183,6 +1210,13 @@ dicteeCanvas.addEventListener('pointermove', (e) => {
 dicteeCanvas.addEventListener('pointerup',     () => { dicteeDrawing = false; });
 dicteeCanvas.addEventListener('pointercancel', () => { dicteeDrawing = false; });
 
+document.getElementById('dicteePenToggle').addEventListener('click', () => {
+  const eraserBtn = document.getElementById('dicteeEraser');
+  eraserBtn.classList.remove('active');
+  eraserBtn.style.background = '';
+  showToast('✏️ Stylet activé !');
+});
+
 document.getElementById('dicteeEraser').addEventListener('click', () => {
   const btn = document.getElementById('dicteeEraser');
   btn.classList.toggle('active');
@@ -1194,7 +1228,7 @@ document.getElementById('dicteeClear').addEventListener('click', () => {
   drawInitMsg(dicteeCtx, dicteeCanvas, '✏️ Zone d\'écriture...');
 });
 
-document.getElementById('checkDictee').addEventListener('click', () => {
+document.getElementById('dicteeCheck').addEventListener('click', () => {
   const wordsData = document.getElementById('dicteeWords').dataset.words;
   if (!wordsData) { showToast('⚠️ Lance d\'abord une dictée !'); return; }
   const words = JSON.parse(wordsData);
