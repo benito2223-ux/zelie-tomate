@@ -32,6 +32,7 @@ const STATE = {
   timerInterval: null,
   timerSeconds: 0,
   recognition: null,
+  mediaRecorder: null,
   isListening: false
 };
 
@@ -523,54 +524,93 @@ document.getElementById('chatSend').addEventListener('click', sendChatMessage);
 addChatMessage("Holeshot Zélie ! 🏁 Je suis Tomate #3, ton copilote ! Qu'est-ce qu'on fait aujourd'hui ?", 'tomate');
 
 // ═══════════════════════════════════════════
-// VOICE RECOGNITION
+// VOICE RECOGNITION — Google Cloud STT via MediaRecorder
+// Remplace Web Speech API (erreurs réseau fréquentes)
 // ═══════════════════════════════════════════
-const voiceBtns = [document.getElementById('chatVoice')];
-voiceBtns.forEach(btn => btn.addEventListener('click', toggleVoice));
+document.getElementById('chatVoice').addEventListener('click', toggleVoice);
 
-function toggleVoice() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('🎤 La reconnaissance vocale n\'est pas disponible sur ce navigateur');
+async function toggleVoice() {
+  const btn = document.getElementById('chatVoice');
+
+  // Stop si en cours
+  if (STATE.isListening && STATE.mediaRecorder) {
+    STATE.mediaRecorder.stop();
     return;
   }
-  if (STATE.isListening) {
-    STATE.recognition.stop();
-    STATE.isListening = false;
-    voiceBtns.forEach(b => b.classList.remove('listening'));
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('🎙️ Micro non supporté sur ce navigateur');
     return;
   }
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  STATE.recognition = new SpeechRecognition();
-  STATE.recognition.lang = 'fr-FR';
-  STATE.recognition.continuous = false;
-  STATE.recognition.interimResults = false;
-  STATE.recognition.onstart = () => {
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
+        ? 'audio/ogg;codecs=opus'
+        : 'audio/webm';
+
+    const recorder = new MediaRecorder(stream, { mimeType });
+    STATE.mediaRecorder = recorder;
     STATE.isListening = true;
-    voiceBtns.forEach(b => b.classList.add('listening'));
-  };
-  STATE.recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    chatInput.value = transcript;
-    sendChatMessage();
-  };
-  STATE.recognition.onend = () => {
-    STATE.isListening = false;
-    voiceBtns.forEach(b => b.classList.remove('listening'));
-  };
-  STATE.recognition.onerror = (event) => {
-    STATE.isListening = false;
-    voiceBtns.forEach(b => b.classList.remove('listening'));
-    const msgs = {
-      'not-allowed':      '🔒 Micro bloqué — autorise le micro dans ton navigateur !',
-      'no-speech':        '🎤 Je n\'ai rien entendu. Parle plus fort et réessaie !',
-      'network':          '🌐 Problème réseau. Réessaie dans quelques secondes.',
-      'service-not-allowed': '⚠️ Reconnaissance vocale non autorisée sur ce navigateur.',
-      'audio-capture':    '🎙️ Micro introuvable. Vérifie qu\'il est bien branché !'
+    btn.classList.add('listening');
+    showToast('🎤 Je t\'écoute Zélie ! Clique pour arrêter...');
+
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+    recorder.onstop = async () => {
+      STATE.isListening = false;
+      btn.classList.remove('listening');
+      stream.getTracks().forEach(t => t.stop());
+
+      showToast('⏳ Tomate analyse ta voix...');
+      try {
+        const blob = new Blob(chunks, { type: mimeType });
+        const base64 = await new Promise(res => {
+          const r = new FileReader();
+          r.onload = () => res(r.result.split(',')[1]);
+          r.readAsDataURL(blob);
+        });
+
+        const encoding = mimeType.includes('ogg') ? 'OGG_OPUS' : 'WEBM_OPUS';
+        const token = await getGoogleTTSToken();
+        const resp = await fetch('https://speech.googleapis.com/v1/speech:recognize', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config: { encoding, sampleRateHertz: 48000, languageCode: 'fr-FR', model: 'default' },
+            audio: { content: base64 }
+          })
+        });
+        const data = await resp.json();
+        const transcript = data.results?.[0]?.alternatives?.[0]?.transcript;
+        if (transcript) {
+          chatInput.value = transcript;
+          sendChatMessage();
+        } else {
+          showToast('🎤 Rien compris — parle plus fort et réessaie !');
+        }
+      } catch (err) {
+        console.error('STT error:', err);
+        showToast('🎤 Erreur analyse vocale — réessaie !');
+      }
     };
-    showToast(msgs[event.error] || '🎤 Oups ! Réessaie en parlant clairement.');
-  };
-  STATE.recognition.start();
-  showToast('🎤 Je t\'écoute Zélie ! Parle maintenant...');
+
+    recorder.start();
+    // Auto-stop après 7 secondes
+    setTimeout(() => { if (STATE.isListening && recorder.state === 'recording') recorder.stop(); }, 7000);
+
+  } catch (err) {
+    STATE.isListening = false;
+    btn.classList.remove('listening');
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      showToast('🔒 Autorise le micro dans ton navigateur !');
+    } else {
+      showToast('🎙️ Micro introuvable — vérifie qu\'il est branché !');
+    }
+  }
 }
 
 document.getElementById('voiceToggle').addEventListener('click', () => {
